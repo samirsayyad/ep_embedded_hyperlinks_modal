@@ -1,0 +1,23 @@
+{
+  "name": "ep_embedded_hyperlinks_modal",
+  "version": "1.0.0",
+  "description": "embedded hyperinks customiz",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samirsayyad/ep_embedded_hyperlinks_modal.git"
+  },
+  "keywords": [
+    "etherpad",
+    "plugin"
+  ],
+  "author": "Samir Sayyad",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/samirsayyad/ep_embedded_hyperlinks_modal/issues"
+  },
+  "homepage": "https://github.com/samirsayyad/ep_embedded_hyperlinks_modal#readme"
+}
