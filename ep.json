@@ -4,6 +4,7 @@
             "name": "main",
             "client_hooks": {
                 "postAceInit" : "ep_embedded_hyperlinks_modal/static/js/index",
+                "aceEditEvent":"ep_embedded_hyperlinks_modal/static/js/aceEditEvent",
                 "aceInitialized" : "ep_embedded_hyperlinks_modal/static/js/index",
                 "aceCreateDomLine" : "ep_embedded_hyperlinks_modal/static/js/index",
                 "aceAttribsToClasses" : "ep_embedded_hyperlinks_modal/static/js/index",

@@ -1,9 +1,15 @@
 var _, $, jQuery;
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
-
+var shared = require("./shared")
+var ep_embedded_hyperlinks_modal = require("./ep_embedded_hyperlinks_modal")
 /* Bind the event handler to the toolbar buttons */
 exports.postAceInit = function(hook, context) {
+  if(!pad.plugins) pad.plugins = {};
+  var Links = ep_embedded_hyperlinks_modal.init(context);
+  pad.plugins.ep_embedded_hyperlinks_modal = Links;
+
+
 
   var padOuter = $('iframe[name="ace_outer"]').contents();
   var padInner = padOuter.find('iframe[name="ace_inner"]').contents();
@@ -14,33 +20,43 @@ exports.postAceInit = function(hook, context) {
     if (!$('#editorcontainerbox').hasClass('flex-layout')) {
         $.gritter.add({
             title: "Error",
-            text: "Ep_embed_hyperlink2: Please upgrade to etherpad 1.9 for this plugin to work correctly",
+            text: "ep_embedded_hyperlinks_modal: Please upgrade to etherpad 1.9 for this plugin to work correctly",
             sticky: true,
             class_name: "error"
         })
     }
     /* Event: User clicks editbar button */
-    $('.hyperlink-icon').on('click',function() {
-        context.ace.callWithAce(function(ace) {
-            var line = ace.ace_doFindHighlightedText();
-            var lineText = ace.ace_getHighlightedText();
-            console.log(lineText)
-            var selectedElement = innerBody.find("#"+line.key)
-            selectedElement.html(function(_, html) {
-                console.log(_,html,lineText)
-                return html.replace(lineText, '<span id="ep_embedded_hyperlinks_modal_selected" class="ep_embedded_hyperlinks_modal_selected">'+lineText+'</span>');
-             });
-            //console.log(selectedElementHtml,"HTML")
-            var ep_embedded_hyperlinks_modal_selected = selectedElement.find("#ep_embedded_hyperlinks_modal_selected")
-            var position = ep_embedded_hyperlinks_modal_selected.position()
-            console.log(position)
-            $("#hyperlink-text").val(lineText)
-            $('.hyperlink-dialog').toggleClass('popup-show');
-            //$('.hyperlink-dialog').css('left', $('.hyperlink-icon').offset().left - 12);
-            $('.hyperlink-dialog').css('top', position.top+82);
-            $('.hyperlink-dialog').css('left', position.left);
+    $('.hyperlink-icon').on('click',function(e) {
+        e.preventDefault(); // stops focus from being lost
+        var rep = {};
 
-      }, 'insertLink', true);
+        context.ace.callWithAce(function(ace) {
+            var saveRep = ace.ace_getRep();
+            rep.lines    = saveRep.lines;
+            rep.selStart = saveRep.selStart;
+            rep.selEnd   = saveRep.selEnd;
+            rep.selectedLine = ace.ace_doFindHighlightedText();
+            rep.lineText = ace.ace_getHighlightedText();
+
+      }, 'selectingLink', true);
+      console.log("all rep ,"  , rep)
+      context.ace.callWithAce(shared.doNothing, 'markPreSelectedTextToLink', true);
+
+      var selectedElement = innerBody.find("#"+rep.selectedLine.key)
+      selectedElement.html(function(_, html) {
+          console.log(_,html,rep.lineText)
+          return html.replace(rep.lineText, '<span class="ep_embedded_hyperlinks_modal_selected">'+rep.lineText+'</span>');
+       });
+      
+      var ep_embedded_hyperlinks_modal_selected = selectedElement.find(".ep_embedded_hyperlinks_modal_selected")
+      var position = ep_embedded_hyperlinks_modal_selected.position()
+      //var position = selectedElement.position()
+      console.log(position)
+      $("#hyperlink-text").val(rep.lineText)
+      $('.hyperlink-dialog').toggleClass('popup-show');
+      //$('.hyperlink-dialog').css('left', $('.hyperlink-icon').offset().left - 12);
+      $('.hyperlink-dialog').css('top', position.top+82);
+      $('.hyperlink-dialog').css('left', position.left);
         
     });
     /* Event: User creates new hyperlink */
