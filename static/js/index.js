@@ -34,6 +34,7 @@ exports.postAceInit = function(hook, context) {
             var ep_embedded_hyperlinks_modal_selected = selectedElement.find("#ep_embedded_hyperlinks_modal_selected")
             var position = ep_embedded_hyperlinks_modal_selected.position()
             console.log(position)
+            $("#hyperlink-text").val(lineText)
             $('.hyperlink-dialog').toggleClass('popup-show');
             //$('.hyperlink-dialog').css('left', $('.hyperlink-icon').offset().left - 12);
             $('.hyperlink-dialog').css('top', position.top+82);

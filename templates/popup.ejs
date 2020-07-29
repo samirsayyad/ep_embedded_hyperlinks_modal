@@ -1,5 +1,6 @@
 <div class="popup acl-write hyperlink-dialog popup toolbar-popup">
     <div class="hyperlink-container popup-content">
+      <input type="text" class="hyperlink-text" id="hyperlink-text" placeholder=""/>
       <input type="text" class="hyperlink-url" placeholder="http://..."/>
       <button type="button" class="btn btn-primary hyperlink-save">Ok</button>
     </div>
@@ -10,10 +11,21 @@
       max-width: 300px;
     }
     .hyperlink-container {
-      display: flex;
+      display: block;
     }
     .hyperlink-url {
       margin: 0 5px 0 0 !important;
+      width: 73%!important;
     }
-  
+    .hyperlink-text {
+      margin: 0 5px 0 0 !important;
+      margin-bottom: 5px !important;
+      width: 73%!important;
+    }
+    .hyperlink-save{
+      float: right;
+      margin-top: -26px;
+      padding: 2px 20px;
+    }
+    
   </style>
