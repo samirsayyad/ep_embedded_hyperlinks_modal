@@ -18,6 +18,18 @@ exports.postAceInit = function(hook, context) {
   var innerBody = padInner.find("#innerdocbody");
 
 
+  innerBody.contents().on("click", ".ep_embedded_hyperlinks_modal", function(e){
+    console.log( $(this).select())
+    context.ace.callWithAce(function(ace) {
+        var saveRep = ace.ace_getRep();
+        console.log(saveRep)
+        lineText = ace.ace_getHighlightedText();
+  }, 'selectingLink', true);
+  });
+
+
+
+
     if (!$('#editorcontainerbox').hasClass('flex-layout')) {
         $.gritter.add({
             title: "Error",
@@ -26,6 +38,9 @@ exports.postAceInit = function(hook, context) {
             class_name: "error"
         })
     }
+    $("#ep_embedded_hyperlinks_modal").on("click",function(e){
+        console.log("I called",e)
+    })
     /* Event: User clicks editbar button */
     $('.hyperlink-icon').on('click',function(e) {
         e.preventDefault(); // stops focus from being lost
@@ -98,9 +113,13 @@ exports.aceCreateDomLine = function(name, context) {
         }
 
         modifier = {
-            extraOpenTags: '<a href="' + url + '">',
-            extraCloseTags: '</a>',
-            cls: cls
+            // extraOpenTags: '<a href="' + url + '">',
+            // extraCloseTags: '</a>',
+            // cls: cls
+             extraOpenTags: '<a class="ep_embedded_hyperlinks_modal" data-text="'+cls+'" data-href="' + url + '">',
+             extraCloseTags: '</a>',
+             cls: cls
+            
         }
         return modifier;
     }
