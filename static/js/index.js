@@ -3,6 +3,7 @@ var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
 var shared = require("./shared")
 var ep_embedded_hyperlinks_modal = require("./ep_embedded_hyperlinks_modal")
+var preLinkMarker = require("./preLinkMarker")
 /* Bind the event handler to the toolbar buttons */
 exports.postAceInit = function(hook, context) {
   if(!pad.plugins) pad.plugins = {};
@@ -29,35 +30,26 @@ exports.postAceInit = function(hook, context) {
     $('.hyperlink-icon').on('click',function(e) {
         e.preventDefault(); // stops focus from being lost
         var rep = {};
-
+        context.ace.callWithAce(shared.doNothing, 'markPreSelectedTextToLink', true);
         context.ace.callWithAce(function(ace) {
-            var saveRep = ace.ace_getRep();
-            rep.lines    = saveRep.lines;
-            rep.selStart = saveRep.selStart;
-            rep.selEnd   = saveRep.selEnd;
-            rep.selectedLine = ace.ace_doFindHighlightedText();
+            //var saveRep = ace.ace_getRep();
+            //rep.lines    = saveRep.lines;
+            //rep.selStart = saveRep.selStart;
+            //rep.selEnd   = saveRep.selEnd;
+            //rep.selectedLine = ace.ace_doFindHighlightedText();
             rep.lineText = ace.ace_getHighlightedText();
-
       }, 'selectingLink', true);
-      console.log("all rep ,"  , rep)
-      context.ace.callWithAce(shared.doNothing, 'markPreSelectedTextToLink', true);
 
-      var selectedElement = innerBody.find("#"+rep.selectedLine.key)
-      selectedElement.html(function(_, html) {
-          console.log(_,html,rep.lineText)
-          return html.replace(rep.lineText, '<span class="ep_embedded_hyperlinks_modal_selected">'+rep.lineText+'</span>');
-       });
-      
-      var ep_embedded_hyperlinks_modal_selected = selectedElement.find(".ep_embedded_hyperlinks_modal_selected")
-      var position = ep_embedded_hyperlinks_modal_selected.position()
-      //var position = selectedElement.position()
+      var selectedElement = innerBody.find("."+preLinkMarker.MARK_CLASS)
+      var position = selectedElement.position()
       console.log(position)
       $("#hyperlink-text").val(rep.lineText)
       $('.hyperlink-dialog').toggleClass('popup-show');
-      //$('.hyperlink-dialog').css('left', $('.hyperlink-icon').offset().left - 12);
       $('.hyperlink-dialog').css('top', position.top+82);
       $('.hyperlink-dialog').css('left', position.left);
         
+      //$('.hyperlink-dialog').css('left', $('.hyperlink-icon').offset().left - 12);
+
     });
     /* Event: User creates new hyperlink */
     $('.hyperlink-save').on('click',function() {
@@ -84,6 +76,11 @@ exports.aceAttribsToClasses = function(hook, context) {
     if(context.key == 'url'){
         var url = context.value;
         return ['url-' + url ];
+    }
+
+    // only read marks made by current user
+    if(context.key === preLinkMarker.MARK_CLASS && context.value === clientVars.userId) {
+        return [preLinkMarker.MARK_CLASS, context.value];
     }
 }
 

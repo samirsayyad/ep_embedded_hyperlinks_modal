@@ -63,7 +63,7 @@ preLinkMarker.prototype.handleUnmarkText = function(context) {
 
 preLinkMarker.prototype.addMark = function(editorInfo, callstack) {
   var eventType  = callstack.editEvent.eventType;
-
+  console.log("come to add mark")
   // we don't want the text marking to be undoable
   this.performNonUnduableEvent(eventType, callstack, function() {
     editorInfo.ace_setAttributeOnSelection(exports.MARK_CLASS, clientVars.userId);
