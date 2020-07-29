@@ -4,6 +4,13 @@ var _ = require('ep_etherpad-lite/static/js/underscore');
 
 /* Bind the event handler to the toolbar buttons */
 exports.postAceInit = function(hook, context) {
+
+  var padOuter = $('iframe[name="ace_outer"]').contents();
+  var padInner = padOuter.find('iframe[name="ace_inner"]').contents();
+  var outerBody = padOuter.find("#outerdocbody");
+  var innerBody = padInner.find("#innerdocbody");
+
+
     if (!$('#editorcontainerbox').hasClass('flex-layout')) {
         $.gritter.add({
             title: "Error",
@@ -14,8 +21,26 @@ exports.postAceInit = function(hook, context) {
     }
     /* Event: User clicks editbar button */
     $('.hyperlink-icon').on('click',function() {
-        $('.hyperlink-dialog').toggleClass('popup-show');
-        $('.hyperlink-dialog').css('left', $('.hyperlink-icon').offset().left - 12);
+        context.ace.callWithAce(function(ace) {
+            var line = ace.ace_doFindHighlightedText();
+            var lineText = ace.ace_getHighlightedText();
+            console.log(lineText)
+            var selectedElement = innerBody.find("#"+line.key)
+            selectedElement.html(function(_, html) {
+                console.log(_,html,lineText)
+                return html.replace(lineText, '<span id="ep_embedded_hyperlinks_modal_selected" class="ep_embedded_hyperlinks_modal_selected">'+lineText+'</span>');
+             });
+            //console.log(selectedElementHtml,"HTML")
+            var ep_embedded_hyperlinks_modal_selected = selectedElement.find("#ep_embedded_hyperlinks_modal_selected")
+            var position = ep_embedded_hyperlinks_modal_selected.position()
+            console.log(position)
+            $('.hyperlink-dialog').toggleClass('popup-show');
+            //$('.hyperlink-dialog').css('left', $('.hyperlink-icon').offset().left - 12);
+            $('.hyperlink-dialog').css('top', position.top+82);
+            $('.hyperlink-dialog').css('left', position.left);
+
+      }, 'insertLink', true);
+        
     });
     /* Event: User creates new hyperlink */
     $('.hyperlink-save').on('click',function() {
@@ -65,24 +90,19 @@ exports.aceCreateDomLine = function(name, context) {
         }
         return modifier;
     }
+
     return [];
 }
 
 /* I don't know what this does */
 exports.aceInitialized = function(hook, context) {
     var editorInfo = context.editorInfo;
-    editorInfo.ace_doInsertLink = _(doInsertLink).bind(context);
-}
 
-function doInsertLink(url) {
-    var rep = this.rep,
-        documentAttributeManager = this.documentAttributeManager;
-    if(!(rep.selStart && rep.selEnd)) {
-        return;
-    }
-    var url = ["url",url];
-    console.log(url,rep)
-    documentAttributeManager.setAttributesOnRange(rep.selStart, rep.selEnd, [url]);
+    editorInfo.ace_doInsertLink = _(doInsertLink).bind(context);
+    editorInfo.ace_doFindHighlightedText = _(doFindHighlightedText).bind(context);
+    editorInfo.ace_getHighlightedText = _(getHighlightedText).bind(context);
+
+
 }
 
 exports.collectContentPre = function(hook,context) {
@@ -94,86 +114,25 @@ exports.collectContentPre = function(hook,context) {
 
 
 
-lastLineSelectedIsEmpty = function(rep, lastLineSelected){
-    var line = rep.lines.atIndex(lastLineSelected);
-    // when we've a line with line attribute, the first char line position
-    // in a line is 1 because of the *, otherwise is 0
-    var firstCharLinePosition = lineHasMarker(line) ? 1 : 0;
-    var lastColumnSelected = rep.selEnd[1];
-  
-    return lastColumnSelected === firstCharLinePosition;
+function getHighlightedText(){
+    var rep = this.rep
+    var line = rep.lines.atIndex( rep.selEnd[0]);
+    var lineText = line.text.substring(rep.selStart[1],  rep.selEnd[1]);
+    return lineText
+}
+
+function doFindHighlightedText(){
+    var rep = this.rep
+    var line = rep.lines.atIndex( rep.selEnd[0]);
+    return line
   }
-getLastLine = function(firstLine, rep){
-    var lastLineSelected = rep.selEnd[0];
-  
-    if (lastLineSelected > firstLine){
-      // Ignore last line if the selected text of it it is empty
-      if(lastLineSelectedIsEmpty(rep, lastLineSelected)){
-        lastLineSelected--;
+  function doInsertLink(url) {
+      var rep = this.rep,
+          documentAttributeManager = this.documentAttributeManager;
+      if(!(rep.selStart && rep.selEnd)) {
+          return;
       }
-    }
-    return lastLineSelected;
+      var url = ["url",url];
+      documentAttributeManager.setAttributesOnRange(rep.selStart, rep.selEnd, [url]);
   }
-  
-// Get a string representation of the text selected on the editor
-getSelectedText = function(rep) {
-    var self = this;
-    var firstLine = rep.selStart[0];
-    var lastLine = self.getLastLine(firstLine, rep);
-    console.log("last line")
-    var selectedText = "";
-  
-    _(_.range(firstLine, lastLine + 1)).each(function(lineNumber){
-       // rep looks like -- starts at line 2, character 1, ends at line 4 char 1
-       /*
-       {
-          rep.selStart[2,0],
-          rep.selEnd[4,2]
-       }
-       */
-       var line = rep.lines.atIndex(lineNumber);
-       // If we span over multiple lines
-       if(rep.selStart[0] === lineNumber){
-         // Is this the first line?
-         if(rep.selStart[1] > 0){
-           var posStart = rep.selStart[1];
-         }else{
-           var posStart = 0;
-         }
-       }
-       if(rep.selEnd[0] === lineNumber){
-         if(rep.selEnd[1] <= line.text.length){
-           var posEnd = rep.selEnd[1];
-         }else{
-           var posEnd = 0;
-         }
-       }
-       var lineText = line.text.substring(posStart, posEnd);
-       // When it has a selection with more than one line we select at least the beginning
-       // of the next line after the first line. As it is not possible to select the beginning
-       // of the first line, we skip it.
-       if(lineNumber > firstLine){
-        // if the selection takes the very beginning of line, and the element has a lineMarker,
-        // it means we select the * as well, so we need to clean it from the text selected
-        lineText = cleanLine(line, lineText);
-        lineText = '\n' + lineText;
-       }
-       selectedText += lineText;
-    });
-    return selectedText;
-  }
-
-  
-  cleanLine = function(line, lineText){
-    var hasALineMarker = lineHasMarker(line);
-    if(hasALineMarker){
-      lineText = lineText.substring(1);
-    }
-    return lineText;
-  }
-
-  lineHasMarker = function(line){
-    return line.lineMarker === 1;
-  }
-
   
